@@ -1,4 +1,4 @@
-# bunjs_project
+# bunshop
 
 To install dependencies:
 

@@ -1,11 +1,16 @@
 {
-  "name": "bunjs_project",
+  "name": "bunshop",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "prisma": "^6.1.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.1.0",
+    "elysia": "^1.1.26"
   }
 }
