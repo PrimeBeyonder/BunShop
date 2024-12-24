@@ -1,14 +1,18 @@
-import Elysia  from "elysia";
-import {PrismaClient} from "@prisma/client"
-import {userRoutes} from "./routes/user.ts";
-import {productRoutes} from "./routes/products.ts";
+import { Elysia } from 'elysia'
+import { userRoutes } from './routes/user'
+import { productRoutes} from "./routes/products.ts";
+import logger from './utils/logger'
 
-const prisma = new PrismaClient();
-const app = new Elysia();
+const app = new Elysia()
 
 app.use(userRoutes)
-app.use(productRoutes);
-app.get("/", () => "Hello World!");
-app.listen(8000, ()=> {
-    console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`)
-});
+app.use(productRoutes)
+
+app.get('/', () => 'Hello, BunShop!')
+
+const port = process.env.PORT ? parseInt(process.env.PORT) : 3000
+
+app.listen(port, () => {
+    logger.info(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`)
+})
+
