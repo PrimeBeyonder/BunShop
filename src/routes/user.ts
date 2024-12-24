@@ -4,18 +4,73 @@ import {PrismaClient} from "@prisma/client"
 const prisma = new PrismaClient();
 
 export const userRoutes = new Elysia({prefix: "/users"})
-        .post("/", async ({body}) => {
-            try{
-                const user = await prisma.user.create({
-                    data: body,
-                })
-                return {message: "User Created Successfully", user};
-            }catch(err){
-                return {error : "Failed to register user", details: err};
-            }
-        }, {
-            body: t.Object({
-                email: t.String(),
-                name: t.Optional(t.String()),
-            })
+    .get("/", async () => {
+        try {
+            const users = await prisma.user.findMany();
+            return new Response(JSON.stringify({ users }), { status: 200 });
+        } catch (err) {
+            return new Response(
+                JSON.stringify({ error: "Failed to retrieve users", details: err }),
+                { status: 500 }
+            );
+        }
+    })
+    .post("/", async ({ body }) => {
+        try {
+            const user = await prisma.user.create({
+                data: body,
+            });
+            return new Response(
+                JSON.stringify({ message: "User Created Successfully", user }),
+                { status: 201 }
+            );
+        } catch (err) {
+            return new Response(
+                JSON.stringify({ error: "Failed to register user", details: err }),
+                { status: 400 }
+            );
+        }
+    }, {
+        body: t.Object({
+            email: t.String(),
+            name: t.Optional(t.String()),
         })
+    })
+    .put("/:id", async ({ params: { id }, body }) => {
+        try {
+            const updatedUser = await prisma.user.update({
+                where: { id: Number(id) },
+                data: body,
+            });
+            return new Response(
+                JSON.stringify({ message: "User Updated Successfully", updatedUser }),
+                { status: 200 }
+            );
+        } catch (err) {
+            return new Response(
+                JSON.stringify({ error: "Failed to update user", details: err }),
+                { status: 500 }
+            );
+        }
+    }, {
+        body: t.Object({
+            email: t.Optional(t.String()),
+            name: t.Optional(t.String()),
+        })
+    })
+    .delete("/:id", async ({ params: { id } }) => {
+        try {
+            await prisma.user.delete({
+                where: { id: Number(id) },
+            });
+            return new Response(
+                JSON.stringify({ message: "User Deleted Successfully", details: id }),
+                { status: 200 }
+            );
+        } catch (err) {
+            return new Response(
+                JSON.stringify({ error: "Failed to delete user", details: err }),
+                { status: 500 }
+            );
+        }
+    });
