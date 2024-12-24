@@ -3,7 +3,7 @@ import {PrismaClient} from "@prisma/client"
 
 const prisma = new PrismaClient();
 
-export const userRoutes = new Elysia({prefix: "/users"})
+export const userRoutes = new Elysia({prefix: "api/v1/users"})
     .get("/", async () => {
         try {
             const users = await prisma.user.findMany();
@@ -15,6 +15,23 @@ export const userRoutes = new Elysia({prefix: "/users"})
             );
         }
     })
+    .get("/:id", async ({ params }) => {
+        const { id } = params;
+        try {
+            const user = await prisma.user.findUnique({
+                where: { id: Number(id) },
+            });
+
+            if (user) {
+                return new Response(JSON.stringify({ user }), { status: 200 });
+            } else {
+                return new Response(JSON.stringify({ message: "No User Found" }), { status: 404 });
+            }
+        } catch (err) {
+            return new Response(JSON.stringify({ message: "Internal Server Error", details: err }), { status: 500 });
+        }
+    })
+
     .post("/", async ({ body }) => {
         try {
             const user = await prisma.user.create({
