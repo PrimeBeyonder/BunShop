@@ -1,14 +1,9 @@
 import { Elysia } from 'elysia'
 import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
+import { productSchema} from "../schema/indes.ts";
 
 const prisma = new PrismaClient()
-
-const productSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    description: z.string().optional(),
-    price: z.coerce.number().positive("Price must be a positive number")
-})
 
 export const productRoutes = new Elysia({prefix: "api/v1/products"})
     .post("/", async({body}) => {
@@ -17,13 +12,12 @@ export const productRoutes = new Elysia({prefix: "api/v1/products"})
             const product = await prisma.product.create({
                 data: validatedData,
             })
-            return new Response(JSON.stringify({ product }), { status: 201 });
+            return { message: 'Product created successfully', product }
         }catch(err) {
             if (err instanceof z.ZodError) {
-                const errorMessages = err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-                return new Response(JSON.stringify({message: `Validation error: ${errorMessages}`}), { status: 400 });
+                return { error: 'Validation failed', details: err.errors }
             }
-            return new Response(JSON.stringify({message: `Error while creating product: ${err}`}), { status: 500 });
+            return { error: 'Failed to create product', details: err }
         }
     })
     .get("/", async()=> {
@@ -54,13 +48,12 @@ export const productRoutes = new Elysia({prefix: "api/v1/products"})
                 where: { id: Number(id) },
                 data: validatedData,
             })
-            return new Response(JSON.stringify({message: `Successfully Updated Product`, product: updatedProduct}), { status: 200 });
+            return { message: 'Product updated successfully', product: updatedProduct }
         }catch(err) {
             if (err instanceof z.ZodError) {
-                const errorMessages = err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-                return new Response(JSON.stringify({message: `Validation error: ${errorMessages}`}), { status: 400 });
+                return { error: 'Validation failed', details: err.errors }
             }
-            return new Response(JSON.stringify({message: `Error while updating product: ${err}`}), { status: 500 });
+            return { error: 'Failed to update product', details: err }
         }
     })
     .delete('/:id', async ({ params: { id } }) => {
