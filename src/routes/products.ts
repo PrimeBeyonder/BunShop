@@ -1,19 +1,34 @@
 import { Elysia, t } from 'elysia';
 import { PrismaClient } from '@prisma/client';
-import { z } from 'zod';
 import { handleError, AppError} from "../utils/ errorHandler.ts";
-import logger from '../utils/logger';
-import { authMiddleware } from '../middleware/auth';
-import { Roles,Role } from '../utils/auth';
 import {productSchema} from "../schema/indes.ts";
+import logger from '../utils/logger';
+import { verifyToken, Roles, Role } from '../utils/auth';
 
 const prisma = new PrismaClient();
 
+const authenticateUser = async (request: Request) => {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new AppError('Token missing or malformed', 401);
+    }
+    const token = authHeader.split(' ')[1];
+    const decoded = verifyToken(token);
+    const { userId } = decoded;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+        throw new AppError('User not found', 404);
+    }
+    return user;
+};
+
 export const productRoutes = new Elysia({ prefix: '/products' })
-    .use(authMiddleware)
-    .post('/', async ({ body, authorize }) => {
+    .post('/', async ({ body, request }) => {
         try {
-            await authorize([Roles.ADMIN, Roles.MANAGER]);
+            const user = await authenticateUser(request);
+            if (![Roles.ADMIN, Roles.MANAGER].includes(user.role as Role)) {
+                throw new AppError('Unauthorized', 403);
+            }
             const validatedData = productSchema.parse(body);
             const product = await prisma.product.create({
                 data: validatedData,
@@ -25,15 +40,12 @@ export const productRoutes = new Elysia({ prefix: '/products' })
             );
         } catch (error) {
             logger.error({ error }, 'Failed to create product');
-            const { error: errorMessage, statusCode } = handleError(error);
-            return new Response(
-                JSON.stringify({ error: errorMessage }),
-                { status: statusCode, headers: { 'Content-Type': 'application/json' } }
-            );
+            return handleError(error);
         }
     })
-    .get('/', async () => {
+    .get('/', async ({ request }) => {
         try {
+            await authenticateUser(request);
             const products = await prisma.product.findMany({
                 where: { isActive: true }
             });
@@ -44,15 +56,12 @@ export const productRoutes = new Elysia({ prefix: '/products' })
             );
         } catch (error) {
             logger.error({ error }, 'Failed to retrieve products');
-            const { error: errorMessage, statusCode } = handleError(error);
-            return new Response(
-                JSON.stringify({ error: errorMessage }),
-                { status: statusCode, headers: { 'Content-Type': 'application/json' } }
-            );
+            return handleError(error);
         }
     })
-    .get('/:id', async ({ params: { id } }) => {
+    .get('/:id', async ({ params: { id }, request }) => {
         try {
+            await authenticateUser(request);
             const product = await prisma.product.findUnique({
                 where: { id: Number(id) },
             });
@@ -66,16 +75,15 @@ export const productRoutes = new Elysia({ prefix: '/products' })
             );
         } catch (error) {
             logger.error({ error }, 'Failed to retrieve product');
-            const { error: errorMessage, statusCode } = handleError(error);
-            return new Response(
-                JSON.stringify({ error: errorMessage }),
-                { status: statusCode, headers: { 'Content-Type': 'application/json' } }
-            );
+            return handleError(error);
         }
     })
-    .put('/:id', async ({ params: { id }, body, authorize }) => {
+    .put('/:id', async ({ params: { id }, body, request }) => {
         try {
-            await authorize([Roles.ADMIN, Roles.MANAGER]);
+            const user = await authenticateUser(request);
+            if (![Roles.ADMIN, Roles.MANAGER].includes(user.role as Role)) {
+                throw new AppError('Unauthorized', 403);
+            }
             const validatedData = productSchema.partial().parse(body);
             const updatedProduct = await prisma.product.update({
                 where: { id: Number(id) },
@@ -88,16 +96,15 @@ export const productRoutes = new Elysia({ prefix: '/products' })
             );
         } catch (error) {
             logger.error({ error }, 'Failed to update product');
-            const { error: errorMessage, statusCode } = handleError(error);
-            return new Response(
-                JSON.stringify({ error: errorMessage }),
-                { status: statusCode, headers: { 'Content-Type': 'application/json' } }
-            );
+            return handleError(error);
         }
     })
-    .delete('/:id', async ({ params: { id }, authorize }) => {
+    .delete('/:id', async ({ params: { id }, request }) => {
         try {
-            await authorize([Roles.ADMIN]);
+            const user = await authenticateUser(request);
+            if (user.role !== Roles.ADMIN) {
+                throw new AppError('Unauthorized', 403);
+            }
             await prisma.product.delete({ where: { id: Number(id) } });
             logger.info({ productId: id }, 'Product deleted successfully');
             return new Response(
@@ -106,11 +113,7 @@ export const productRoutes = new Elysia({ prefix: '/products' })
             );
         } catch (error) {
             logger.error({ error }, 'Failed to delete product');
-            const { error: errorMessage, statusCode } = handleError(error);
-            return new Response(
-                JSON.stringify({ error: errorMessage }),
-                { status: statusCode, headers: { 'Content-Type': 'application/json' } }
-            );
+            return handleError(error);
         }
     });
 
