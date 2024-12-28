@@ -28,3 +28,12 @@ export const loginSchema = z.object({
     email: z.string().email(),
     password: z.string(),
 });
+
+export const orderItemSchema = z.object({
+    productId: z.number(),
+    quantity: z.number().positive(),
+});
+
+export const orderSchema = z.object({
+    items: z.array(orderItemSchema),
+});
