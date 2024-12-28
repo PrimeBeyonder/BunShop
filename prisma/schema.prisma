@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,19 +8,53 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  password        String
+  name            String?
+  role            String    @default("USER")
+  phoneNumber     String?
+  address         String?
+  dateOfBirth     DateTime?
+  profileImageUrl String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  orders          Order[]
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   name        String
   description String?
   price       Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  category    String
+  brand       String?
+  sku         String      @unique
+  stockCount  Int
+  imageUrl    String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  user       User        @relation(fields: [userId], references: [id])
+  status     String
+  total      Float
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  orderItems OrderItem[]
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
 }
