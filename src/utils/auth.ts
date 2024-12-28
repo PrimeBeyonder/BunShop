@@ -24,3 +24,29 @@ export const hashPassword = async (password: string): Promise<string> => {
 export const comparePasswords = async (password: string, hashedPassword: string): Promise<boolean> => {
     return await bcrypt.compare(password, hashedPassword);
 };
+export const authorizeRole = (allowedRoles: string[]) => {
+    return (user: { role: string }) => {
+        if (!allowedRoles.includes(user.role)) {
+            throw new Error('Unauthorized');
+        }
+    };
+}
+
+export const Roles = {
+    USER: "USER",
+    ADMIN: "ADMIN",
+    MANAGER: "MANAGER",
+    SUPPORT: "SUPPORT",
+} as const;
+
+export type Role = typeof Roles[keyof typeof Roles];
+
+export const OrderStatus = {
+    PENDING: "PENDING",
+    PROCESSING: "PROCESSING",
+    SHIPPED: "SHIPPED",
+    DELIVERED: "DELIVERED",
+    CANCELED: "CANCELED",
+}as const;
+
+export type OrderStatus = typeof OrderStatus[keyof typeof OrderStatus];
