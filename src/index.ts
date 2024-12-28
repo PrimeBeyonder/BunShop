@@ -2,11 +2,13 @@ import { Elysia } from 'elysia';
 import { userRoutes } from './routes/user';
 import { productRoutes} from "./routes/products.ts";
 import logger from './utils/logger';
+import {orderRoutes} from "./routes/order.ts";
 
 const app = new Elysia();
 
 app.use(userRoutes);
 app.use(productRoutes);
+app.use(orderRoutes);
 
 app.get('/', () => 'Welcome to BunShop API!');
 
