@@ -20,6 +20,27 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   orders          Order[]
+  reviews         Review[]
+}
+
+model Category {
+  id            Int        @id @default(autoincrement())
+  name          String     @unique
+  description   String?
+  parentId      Int?
+  parent        Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  subCategories Category[] @relation("SubCategories")
+  products      Product[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Tag {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Product {
@@ -27,7 +48,9 @@ model Product {
   name        String
   description String?
   price       Float
-  category    String
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  tags        Tag[]
   brand       String?
   sku         String      @unique
   stockCount  Int
@@ -36,6 +59,7 @@ model Product {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
+  reviews     Review[]
 }
 
 model Order {
@@ -50,7 +74,7 @@ model Order {
   refundedAt   DateTime?
   refundAmount Float?
   orderItems   OrderItem[]
-  Payment      Payment?
+  payment      Payment?
 }
 
 model OrderItem {
@@ -74,4 +98,16 @@ model Payment {
   transactionId String   @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
