@@ -24,3 +24,11 @@ export const updateReview = async (id: number, data: Partial<Omit<Review, 'id' |
 export const deleteReview = async (id: number): Promise<void> => {
     await prisma.review.delete({ where: { id } });
 }
+
+export const getAverageRatingForProduct = async (productId: number): Promise<number> => {
+    const result = await prisma.review.aggregate({
+        where: { productId },
+        _avg: { rating: true }
+    });
+    return result._avg.rating || 0;
+};
