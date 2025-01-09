@@ -99,3 +99,20 @@ export const tagRoutes = new Elysia({prefix: "/tags"})
             return handleError(error);
         }
     })
+    .delete("/:id", async ({params: {id}, request}) => {
+        try{
+            const user = await authenticateUser(request);
+            if(user.role !== Roles.ADMIN){
+                throw new AppError('Unauthorized', 403);
+            }
+            const tag = await tagService.deleteTag(Number(id));
+            logger.info({tag}, 'Tag deleted successfully');
+            return new Response(
+                JSON.stringify({message: 'Tag deleted successfully', tag}),
+                {status: 200, headers: {'Content-Type': 'application/json'}}
+            )
+        }catch(error){
+            logger.error({error}, 'Failed to delete tag');
+            return handleError(error);
+        }
+    })
