@@ -78,3 +78,25 @@ export const categoryRoutes = new Elysia({ prefix: '/categories' })
         return handleError(error);
       }
   })
+  .put("/:id", async ({params: {id}, body, request}) => {
+    try{
+        const user = await authenticateUser(request);
+        if(![Roles.ADMIN, Roles.MANAGER].includes(user.role as Roles)){
+            throw new AppError('Unauthorized', 403);
+        }
+        const validatedData = categorySchema.partial().parse(body);
+        const category = await categoryService.getCategoryById(id);
+        if(!category){
+            throw new AppError('Category Not Found', 404);
+        }
+        const updatedCategory = await categoryService.updateCategory(Number(id), validatedData);
+        logger.info({categoryId: updatedCategory.id}, 'Category updated successfully');
+        return new Response(
+            JSON.stringify({ message: 'Category updated successfully', category: updatedCategory }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+    }catch (error) {
+        logger.error({ error }, 'Failed to update category');
+        return handleError(error);
+      }
+  })
