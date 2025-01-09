@@ -37,3 +37,9 @@ export const orderItemSchema = z.object({
 export const orderSchema = z.object({
     items: z.array(orderItemSchema),
 });
+
+export const categorySchema = z.object({
+    name: z.string(),
+    description: z.string().optional(),
+    parentId: z.number().optional(),
+});
