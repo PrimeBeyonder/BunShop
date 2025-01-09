@@ -49,3 +49,16 @@ export const tagRoutes = new Elysia({prefix: "/tags"})
             return handleError(error);
         }
     })
+    .get("/", async () => {
+        try {
+            const tags = await tagService.getAllTags();
+            logger.info('Tags retrieved successfully');
+            return new Response(
+                JSON.stringify(tags),
+                {status: 200, headers: {'Content-Type': 'application/json'}}
+            )
+        } catch (error) {
+            logger.error({error}, 'Failed to retrieve tags');
+            return handleError(error);
+        }
+    })
