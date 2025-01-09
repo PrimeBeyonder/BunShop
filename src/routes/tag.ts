@@ -62,3 +62,40 @@ export const tagRoutes = new Elysia({prefix: "/tags"})
             return handleError(error);
         }
     })
+    .get("/:id", async ({params : { id }}) => {
+        try{
+            const tag = await tagService.getTagById(Number(id));
+            if(!tag){
+                throw new AppError('Tag not found', 404);
+            }
+            logger.info({tagId: tag.id}, 'Tag retrieved successfully');
+            return new Response(
+                JSON.stringify(tag),
+                {status: 200, headers: {'Content-Type': 'application/json'}}
+            )
+        }catch(error){
+            logger.error({error}, 'Failed to retrieve tag');
+            return handleError(error);
+        }
+    })
+    .put("/:id", async ({params: {id}, body, request}) => {
+        try{
+            const user = await authenticateUser(request);
+            if(user.role !== Roles.ADMIN){
+                throw new AppError('Unauthorized', 403);
+            }
+            const validatedData = tagSchema.parse(body);
+            const tagData = {
+                name: validatedData.name
+            }
+            const tag = await tagService.updateTag(Number(id), tagData);
+            logger.info({tagId: tag.id}, 'Tag updated successfully');
+            return new Response(
+                JSON.stringify({message: 'Tag updated successfully', tag}),
+                {status: 200, headers: {'Content-Type': 'application/json'}}
+            )
+        }catch(error){
+            logger.error({error}, 'Failed to update tag');
+            return handleError(error);
+        }
+    })
