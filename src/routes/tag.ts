@@ -26,3 +26,26 @@ const authenticateUser = async (request: Request) => {
   }
   return user;
 };
+
+export const tagRoutes = new Elysia({prefix: "/tags"})
+    .post("/", async ({body, request}) => {
+        try {
+            const user = await authenticateUser(request);
+            if (![Roles.ADMIN, Roles.MANAGER].includes(user.role as Roles)) {
+                throw new AppError('Unauthorized', 403);
+            }
+            const validatedData = tagSchema.parse(body);
+            const tagData = {
+                name: validatedData.name
+            }
+            const tag = await tagService.createTag(tagData);
+            logger.info({tagId: tag.id}, 'Tag created successfully');
+            return new Response(
+                JSON.stringify({message: 'Tag created successfully', tag}),
+                {status: 201, headers: {'Content-Type': 'application/json'}}
+            );
+        } catch (error) {
+            logger.error({error}, 'Failed to create tag');
+            return handleError(error);
+        }
+    })
