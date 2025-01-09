@@ -62,3 +62,19 @@ export const categoryRoutes = new Elysia({ prefix: '/categories' })
         return handleError(error);
     }
   })
+  .get("/:id", async ({params : {id}}) => {
+    try{
+        const category = await categoryService.getCategoryById(id);
+        if(!category){
+            throw new AppError("Category Not Found", 404);
+        }
+        logger.info({categoryId: category.id}, "Category Retrieved Successfully");
+        return new Response(
+            JSON.stringify({ category }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )
+    } catch (error) {
+        logger.error({ error }, 'Failed to retrieve category');
+        return handleError(error);
+      }
+  })
