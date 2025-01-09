@@ -64,7 +64,7 @@ export const categoryRoutes = new Elysia({ prefix: '/categories' })
   })
   .get("/:id", async ({params : {id}}) => {
     try{
-        const category = await categoryService.getCategoryById(id);
+        const category = await categoryService.getCategoryById(Number(id));
         if(!category){
             throw new AppError("Category Not Found", 404);
         }
@@ -85,7 +85,6 @@ export const categoryRoutes = new Elysia({ prefix: '/categories' })
             throw new AppError('Unauthorized', 403);
         }
         const validatedData = categorySchema.partial().parse(body);
-        const category = await categoryService.getCategoryById(id);
         if(!category){
             throw new AppError('Category Not Found', 404);
         }
@@ -100,3 +99,20 @@ export const categoryRoutes = new Elysia({ prefix: '/categories' })
         return handleError(error);
       }
   })
+  .delete('/:id', async ({ params: { id }, request }) => {
+    try {
+      const user = await authenticateUser(request);
+      if (user.role !== Roles.ADMIN) {
+        throw new AppError('Unauthorized', 403);
+      }
+      await categoryService.deleteCategory(Number(id));
+      logger.info({ categoryId: id }, 'Category deleted successfully');
+      return new Response(
+        JSON.stringify({ message: 'Category deleted successfully' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      logger.error({ error }, 'Failed to delete category');
+      return handleError(error);
+    }
+  });
