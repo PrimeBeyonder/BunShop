@@ -49,3 +49,16 @@ export const categoryRoutes = new Elysia({ prefix: '/categories' })
       return handleError(error);
     }
   })
+  .get("/" , async () => {
+    try{
+        const categories = await categoryService.getAllCategories();
+        logger.info('Categories retrieved successfully');
+        return new Response(
+            JSON.stringify(categories),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }       
+        )
+    }catch(error){
+        logger.error({ error }, 'Failed to retrieve categories');
+        return handleError(error);
+    }
+  })
