@@ -96,3 +96,24 @@ export const reviewRoutes = new Elysia({ prefix: '/reviews' })
             return handleError(error);
         }
     })
+    .delete('/:id', async ({ params: { id }, request }) => {
+        try {
+            const user = await authenticateUser(request);
+            const review = await reviewService.getReviewById(Number(id));
+            if (!review) {
+                throw new AppError('Review not found', 404);
+            }
+            if (review.userId !== user.id && user.role !== Roles.ADMIN) {
+                throw new AppError('Unauthorized', 403);
+            }
+            await reviewService.deleteReview(Number(id));
+            logger.info({ reviewId: id }, 'Review deleted successfully');
+            return new Response(
+                JSON.stringify({ message: 'Review deleted successfully' }),
+                { status: 200, headers: { 'Content-Type': 'application/json' } }
+            );
+        } catch (error) {
+            logger.error({ error }, 'Failed to delete review');
+            return handleError(error);
+        }
+    });
