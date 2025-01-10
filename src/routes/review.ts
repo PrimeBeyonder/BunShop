@@ -71,3 +71,28 @@ export const reviewRoutes = new Elysia({ prefix: '/reviews' })
             return handleError(error);
         }
     })
+    .put('/:id', async ({ params: { id }, body, request }) => {
+        try {
+            const user = await authenticateUser(request);
+            const review = await reviewService.getReviewById(Number(id));
+            if (!review) {
+                throw new AppError('Review not found', 404);
+            }
+            if (review.userId !== user.id && user.role !== Roles.ADMIN) {
+                throw new AppError('Unauthorized', 403);
+            }
+            const validatedData = reviewSchema.partial().parse(body);
+            const updatedReview = await reviewService.updateReview(Number(id), {
+                rating: validatedData.rating,
+                comment: validatedData.comment
+            });
+            logger.info({ reviewId: id }, 'Review updated successfully');
+            return new Response(
+                JSON.stringify({ message: 'Review updated successfully', review: updatedReview }),
+                { status: 200, headers: { 'Content-Type': 'application/json' } }
+            );
+        } catch (error) {
+            logger.error({ error }, 'Failed to update review');
+            return handleError(error);
+        }
+    })
