@@ -28,3 +28,23 @@ const authenticateUser = async (request: Request) => {
     }
     return user;
 };
+
+export const reviewRoutes = new Elysia({ prefix: '/reviews' })
+    .post('/', async ({ body, request }) => {
+        try {
+            const user = await authenticateUser(request);
+            const validatedData = reviewSchema.parse(body);
+            const review = await reviewService.createReview({
+                ...validatedData,
+                userId: user.id,
+            });
+            logger.info({ reviewId: review.id }, 'Review created successfully');
+            return new Response(
+                JSON.stringify({ message: 'Review created successfully', review }),
+                { status: 201, headers: { 'Content-Type': 'application/json' } }
+            );
+        } catch (error) {
+            logger.error({ error }, 'Failed to create review');
+            return handleError(error);
+        }
+    })
