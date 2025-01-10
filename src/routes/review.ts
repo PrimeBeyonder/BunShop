@@ -34,10 +34,19 @@ export const reviewRoutes = new Elysia({ prefix: '/reviews' })
         try {
             const user = await authenticateUser(request);
             const validatedData = reviewSchema.parse(body);
-            const review = await reviewService.createReview({
-                ...validatedData,
-                userId: user.id,
-            });
+
+            const reviewData: ReviewCreateInput = {
+                rating: validatedData.rating,
+                comment: validatedData.comment,
+                user: {
+                    connect: { id: user.id }
+                },
+                product: {
+                    connect: { id: validatedData.productId }
+                }
+            };
+
+            const review = await reviewService.createReview(reviewData);
             logger.info({ reviewId: review.id }, 'Review created successfully');
             return new Response(
                 JSON.stringify({ message: 'Review created successfully', review }),
