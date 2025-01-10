@@ -57,3 +57,17 @@ export const reviewRoutes = new Elysia({ prefix: '/reviews' })
             return handleError(error);
         }
     })
+    .get('/product/:productId', async ({ params: { productId } }) => {
+        try {
+            const reviews = await reviewService.getReviewsByProductId(Number(productId));
+            const averageRating = await reviewService.getAverageRatingForProduct(Number(productId));
+            logger.info({ productId }, 'Reviews retrieved successfully');
+            return new Response(
+                JSON.stringify({ reviews, averageRating }),
+                { status: 200, headers: { 'Content-Type': 'application/json' } }
+            );
+        } catch (error) {
+            logger.error({ error }, 'Failed to retrieve reviews');
+            return handleError(error);
+        }
+    })
